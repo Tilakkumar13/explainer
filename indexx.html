@@ -1,0 +1,349 @@
+<title>Finding the Nourishment</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: a single narrow "instrument readout" column. Cool paper / night-monitor palette,
+     one warm amber reserved for the anomaly. Two built animations carry the teaching:
+     the signals stepping up together, then the model flagging the break. */
+  :root{
+    --bg:#e8ecef; --panel:#ffffff; --panel-2:#f3f6f8;
+    --ink:#14222e; --muted:#5b6b78; --faint:#8a99a5;
+    --line:#ccd6dd; --grid:#dde5ea;
+    --calm:#2c6e8c;          /* the steady, normal signal */
+    --accent:#ca6a12;        /* the nourishment — the one warm colour on the page */
+    --accent-band:rgba(202,106,18,.12);
+    --display:"Instrument Serif",Georgia,"Times New Roman",serif;
+    --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#0b1219; --panel:#111d26; --panel-2:#0e1922;
+    --ink:#e8eef3; --muted:#90a1af; --faint:#5f7080;
+    --line:#243440; --grid:#1b2831;
+    --calm:#5fa8c6; --accent:#eaa24c; --accent-band:rgba(234,162,76,.14);
+    color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0b1219; --panel:#111d26; --panel-2:#0e1922;
+    --ink:#e8eef3; --muted:#90a1af; --faint:#5f7080;
+    --line:#243440; --grid:#1b2831;
+    --calm:#5fa8c6; --accent:#eaa24c; --accent-band:rgba(234,162,76,.14);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--sans); line-height:1.6; font-size:16px;
+    -webkit-font-smoothing:antialiased;
+    padding-left:max(18px,env(safe-area-inset-left,0px));
+    padding-right:max(18px,env(safe-area-inset-right,0px));
+    padding-block:0 60px;
+  }
+  .wrap{max-width:620px; margin:0 auto}
+
+  /* ---- hero ---- */
+  header{padding:56px 0 30px; position:relative}
+  .meta{font-family:var(--mono); font-size:11.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--calm); display:flex; gap:10px; align-items:center; margin:0 0 20px}
+  .meta .dot{width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 0 var(--accent); animation:beat 2.4s ease-out infinite}
+  @keyframes beat{0%{box-shadow:0 0 0 0 rgba(202,106,18,.4)}70%,100%{box-shadow:0 0 0 7px rgba(202,106,18,0)}}
+  h1{font-family:var(--display); font-weight:400; font-size:clamp(34px,8.5vw,56px); line-height:1.04; letter-spacing:.005em; margin:0; text-wrap:balance}
+  h1 em{font-style:italic; color:var(--accent)}
+  .lede{color:var(--muted); font-size:17px; margin:18px 0 0; max-width:48ch; text-wrap:pretty}
+
+  /* ---- sections ---- */
+  section{padding:30px 0; border-top:1px solid var(--line)}
+  .step{font-family:var(--mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); margin:0 0 14px; display:flex; gap:12px; align-items:baseline}
+  .step b{color:var(--accent); font-weight:600}
+  h2{font-family:var(--display); font-weight:400; font-size:clamp(25px,6vw,32px); line-height:1.1; margin:0 0 10px; letter-spacing:.005em}
+  p{margin:12px 0 0; color:var(--ink)}
+  p.q{color:var(--muted)}
+  .hl{color:var(--accent); font-weight:600}
+  .calmword{color:var(--calm); font-weight:600}
+
+  /* ---- chart cards ---- */
+  .instr{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px 16px 14px; margin:20px 0 0; box-shadow:0 1px 2px rgba(20,34,46,.04)}
+  .instr svg{display:block; width:100%; height:auto}
+  .legend{display:flex; flex-wrap:wrap; gap:14px 18px; font-family:var(--mono); font-size:11px; color:var(--muted); margin:14px 2px 2px}
+  .legend span{display:inline-flex; align-items:center; gap:6px}
+  .swatch{width:14px; height:3px; border-radius:2px; display:inline-block}
+  .row-ctl{display:flex; align-items:center; gap:14px; margin:16px 0 0; flex-wrap:wrap}
+  button{font-family:var(--mono); font-size:13px; letter-spacing:.04em; font-weight:500; border:1px solid var(--accent); background:var(--accent); color:#fff; border-radius:10px; padding:11px 20px; cursor:pointer; transition:transform .08s ease, opacity .2s}
+  button:hover{opacity:.92}
+  button:active{transform:translateY(1px)}
+  button.ghost{background:transparent; color:var(--calm); border-color:var(--line)}
+  button:disabled{opacity:.45; cursor:default}
+  button:focus-visible{outline:2px solid var(--calm); outline-offset:3px}
+  .cap{font-family:var(--mono); font-size:12px; color:var(--faint); margin-left:auto; text-align:right; max-width:60%; line-height:1.4; transition:color .3s}
+  .cap.live{color:var(--accent)}
+
+  /* SVG styling via tokens */
+  .grid{stroke:var(--grid); stroke-width:1}
+  .axis-lab{fill:var(--faint); font-family:var(--mono); font-size:9px}
+  .ln{fill:none; stroke:var(--calm); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round}
+  .pt{fill:var(--panel); stroke:var(--calm); stroke-width:1.8}
+  .pt.after{stroke:var(--accent)}
+  .ln.after{stroke:var(--accent)}
+  .band{fill:var(--accent-band); opacity:0}
+  .bandlab{fill:var(--accent); font-family:var(--mono); font-size:9.5px; font-weight:600; opacity:0}
+  .head{stroke:var(--accent); stroke-width:1.4; stroke-dasharray:2 3; opacity:0}
+  .bar{fill:var(--faint); transition:fill .4s}
+  .bar.flag{fill:var(--accent)}
+  .ring2{fill:none; stroke:var(--accent); stroke-width:2; opacity:0; transition:opacity .5s}
+  .ring2.on{opacity:1}
+  .flaglab{fill:var(--accent); font-family:var(--mono); font-size:10px; font-weight:600; opacity:0; transition:opacity .5s}
+  .flaglab.on{opacity:1}
+
+  pre{background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:16px; overflow-x:auto; font-family:var(--mono); font-size:12.5px; line-height:1.7; margin:18px 0 0; color:var(--ink)}
+  pre .c{color:var(--faint)}
+  pre .k{color:var(--calm)}
+  pre .a{color:var(--accent)}
+  .start{background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:0 12px 12px 0; padding:16px 18px; margin:20px 0 0}
+  .start p{margin:0; color:var(--ink)}
+  footer{margin-top:40px; font-family:var(--mono); font-size:11px; color:var(--faint); text-align:center; letter-spacing:.04em}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important} }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="wrap">
+  <header>
+    <p class="meta"><span class="dot"></span> Croatian Adriatic · Sentinel-2 · one beach</p>
+    <h1>The year a beach was <em>quietly filled</em> — found by a model no one told what to look for.</h1>
+    <p class="lede">You give it a few years of satellite readings for one site. It hands back the date the gravel went down. Here's exactly how, step by step.</p>
+  </header>
+
+  <!-- 01 -->
+  <section>
+    <p class="step"><b>01</b> The recording</p>
+    <h2>Three signals, watched over time</h2>
+    <p class="q">Each satellite pass gives three readings inside the beach: how <span class="calmword">bright</span> it is, how <span class="calmword">smooth</span> the surface is, and how <span class="calmword">wide</span> the beach is. Press play and watch them get recorded, date by date.</p>
+    <div class="instr">
+      <svg id="series" viewBox="0 0 340 250" role="img" aria-label="Three signals over time, each stepping up at the nourishment date"></svg>
+    </div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--calm)"></i> steady / normal</span>
+      <span><i class="swatch" style="background:var(--accent)"></i> after the fill</span>
+    </div>
+    <div class="row-ctl">
+      <button id="play1">Play the recording</button>
+      <button class="ghost" id="reset1" hidden>Again</button>
+      <span class="cap" id="cap1">12 dates across three years</span>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section>
+    <p class="step"><b>02</b> The fingerprint</p>
+    <h2>All three jump at once — and stay</h2>
+    <p>That's the whole trick. A wet day lifts brightness alone. A storm widens the beach for a week, then it creeps back. Only a real fill moves <span class="hl">brightness, texture and width together</span> on the same date and holds them there. Watching three signals instead of one is what tells a fill apart from the weather.</p>
+  </section>
+
+  <!-- 03 -->
+  <section>
+    <p class="step"><b>03</b> The detection</p>
+    <h2>The model names the odd date</h2>
+    <p class="q">For every date, measure how far it breaks from the beach's own steady rhythm. Almost every date barely moves. One doesn't. The model doesn't need you to label anything — it just finds the date that refuses to fit.</p>
+    <div class="instr">
+      <svg id="delta" viewBox="0 0 340 185" role="img" aria-label="Change magnitude per date, with one tall bar at the nourishment date"></svg>
+    </div>
+    <div class="row-ctl">
+      <button id="run2">Run the model</button>
+      <span class="cap" id="cap2">how much each date differs from the one before</span>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section>
+    <p class="step"><b>04</b> The part everyone asks about</p>
+    <h2>The beach is its own baseline</h2>
+    <p>You never hand the model a threshold or a benchmark. It reads <em>all</em> the dates and works out what "normal" looks like <span class="hl">for this beach</span> — the quiet, similar dates. Anything that breaks that pattern stands out on its own. Every beach defines its own normal, so the method travels to any site without retuning.</p>
+  </section>
+
+  <!-- 05 -->
+  <section>
+    <p class="step"><b>05</b> In code it's tiny</p>
+    <h2>No labels, no training set</h2>
+    <p class="q">Unsupervised means there's no answer key. You pass the table; it returns the odd date.</p>
+<pre><span class="c"># one row per date, three columns</span>
+<span class="k">from</span> sklearn.ensemble <span class="k">import</span> IsolationForest
+
+X   = df[[<span class="a">"bright"</span>, <span class="a">"texture"</span>, <span class="a">"width"</span>]]
+iso = IsolationForest(contamination=0.08).fit(X)
+df[<span class="a">"odd"</span>] = iso.predict(X)        <span class="c"># -1 = doesn't fit</span>
+
+df[df.odd == -1][<span class="a">"date"</span>]         <span class="c"># &rarr; the fill date</span></pre>
+  </section>
+
+  <!-- 06 -->
+  <section>
+    <p class="step"><b>06</b> Where to actually start</p>
+    <h2>Just plot it first</h2>
+    <div class="start">
+      <p>Before any model: build that table for <em>one</em> beach and plot the three lines, exactly like step 01. You'll very likely see the jump with your own eyes. The machine learning only turns what you can already see into something you can measure and defend. You don't need it working before you have your first real result.</p>
+    </div>
+  </section>
+
+  <footer>made for Dora · gravel-mound nourishment, Croatian Adriatic</footer>
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var SVGNS='http://www.w3.org/2000/svg';
+  function el(n,a){var e=document.createElementNS(SVGNS,n);for(var k in a)e.setAttribute(k,a[k]);return e;}
+
+  // ---------- data ----------
+  var dates=['Jun18','Sep18','Dec18','Mar19','Jun19','Sep19','Dec19','Mar20','Jun20','Sep20','Dec20','Mar21'];
+  var fill=6;
+  var bright =[0.21,0.22,0.20,0.23,0.21,0.22,0.44,0.43,0.45,0.44,0.43,0.44];
+  var texture=[0.40,0.39,0.41,0.38,0.40,0.41,0.71,0.70,0.72,0.69,0.71,0.70];
+  var width  =[52,51,53,52,51,53,67,66,68,67,66,67];
+  var N=dates.length;
+
+  // ---------- chart 1: three stacked sparklines + sweep ----------
+  var svg=document.getElementById('series');
+  var PL=52, PR=326, span=PR-PL;
+  function px(i){return PL + i*(span/(N-1));}
+  var rows=[
+    {data:bright, lab:'BRIGHT', top:22, bot:64},
+    {data:texture,lab:'TEXTURE',top:100,bot:142},
+    {data:width,  lab:'WIDTH', top:178,bot:220}
+  ];
+  function ymap(v,lo,hi,top,bot){return bot-(v-lo)/(hi-lo)*(bot-top);}
+  var lines=[], allDots=[], band, bandLab, head;
+
+  rows.forEach(function(r){
+    var lo=Math.min.apply(null,r.data), hi=Math.max.apply(null,r.data);
+    var pad=(hi-lo)*0.35 || 0.05; lo-=pad; hi+=pad;
+    // baseline grid
+    svg.appendChild(el('line',{x1:PL,y1:r.bot,x2:PR,y2:r.bot,class:'grid'}));
+    // row label
+    var t=el('text',{x:0,y:(r.top+r.bot)/2+3,class:'axis-lab'}); t.textContent=r.lab; svg.appendChild(t);
+    // split line into pre (calm) and post (amber) so colour tells the story
+    function poly(a,b,cls){
+      var pts=[];
+      for(var i=a;i<=b;i++) pts.push(px(i)+','+ymap(r.data[i],lo,hi,r.top,r.bot).toFixed(1));
+      var p=el('polyline',{points:pts.join(' '),class:cls});
+      svg.appendChild(p); return p;
+    }
+    var pre=poly(0,fill,'ln');            // through the fill point
+    var post=poly(fill,N-1,'ln after');
+    lines.push(pre,post);
+    // dots
+    for(var i=0;i<N;i++){
+      var c=el('circle',{cx:px(i),cy:ymap(r.data[i],lo,hi,r.top,r.bot).toFixed(1),r:3.1,class:'pt'+(i>=fill?' after':'')});
+      c.style.opacity=0; svg.appendChild(c); allDots.push(c);
+    }
+  });
+  // fill band spanning all rows
+  band=el('rect',{x:px(fill)-11,y:14,width:22,height:214,rx:4,class:'band'}); svg.appendChild(band);
+  bandLab=el('text',{x:px(fill),y:11,'text-anchor':'middle',class:'bandlab'}); bandLab.textContent='FILL'; svg.appendChild(bandLab);
+  // playhead
+  head=el('line',{x1:PL,y1:14,x2:PL,y2:234,class:'head'}); svg.appendChild(head);
+  // date ticks (sparse)
+  [0,fill,N-1].forEach(function(i){
+    var t=el('text',{x:px(i),y:244,'text-anchor':'middle',class:'axis-lab'}); t.textContent=dates[i]; svg.appendChild(t);
+  });
+
+  // measure line lengths for dash reveal
+  lines.forEach(function(p){ var L=p.getTotalLength(); p.style.strokeDasharray=L; p.style.strokeDashoffset=L; });
+
+  var cap1=document.getElementById('cap1'), play1=document.getElementById('play1'), reset1=document.getElementById('reset1');
+  var raf1=null;
+
+  function showAll(){
+    lines.forEach(function(p){p.style.strokeDashoffset=0;});
+    allDots.forEach(function(d){d.style.opacity=1;});
+    band.style.opacity=1; bandLab.style.opacity=1; head.style.opacity=0;
+    cap1.textContent='every signal jumped at once — and stayed'; cap1.classList.add('live');
+  }
+  function resetSeries(){
+    if(raf1) cancelAnimationFrame(raf1);
+    lines.forEach(function(p){ p.style.transition='none'; p.style.strokeDashoffset=p.getTotalLength(); });
+    allDots.forEach(function(d){d.style.transition='none'; d.style.opacity=0;});
+    band.style.transition='none'; band.style.opacity=0; bandLab.style.opacity=0;
+    head.style.opacity=0; head.setAttribute('x1',PL); head.setAttribute('x2',PL);
+    cap1.textContent='12 dates across three years'; cap1.classList.remove('live');
+    play1.disabled=false; reset1.hidden=true;
+    // re-enable transitions next frame
+    requestAnimationFrame(function(){ allDots.forEach(function(d){d.style.transition='opacity .25s';}); band.style.transition='opacity .4s'; });
+  }
+  function playSeries(){
+    play1.disabled=true; reset1.hidden=false; cap1.classList.remove('live');
+    cap1.textContent='recording…';
+    var D=3800, t0=null, Ltot=lines.map(function(p){return p.getTotalLength();});
+    lines.forEach(function(p){p.style.transition='none';});
+    allDots.forEach(function(d){d.style.transition='opacity .25s';});
+    band.style.transition='opacity .5s';
+    head.style.opacity=1;
+    function frame(ts){
+      if(!t0)t0=ts; var p=Math.min((ts-t0)/D,1);
+      var e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2; // easeInOutQuad
+      var hx=PL+e*span; head.setAttribute('x1',hx); head.setAttribute('x2',hx);
+      lines.forEach(function(ln,i){ ln.style.strokeDashoffset=Ltot[i]*(1-e); });
+      allDots.forEach(function(d,idx){ var di=idx%N; if(hx>=px(di)-0.5) d.style.opacity=1; });
+      if(hx>=px(fill)){ band.style.opacity=1; bandLab.style.opacity=1;
+        if(cap1.textContent!=='all three jumped — and stayed'){ cap1.textContent='all three jumped — and stayed'; cap1.classList.add('live'); } }
+      if(p<1){ raf1=requestAnimationFrame(frame); }
+      else{ head.style.opacity=0; play1.disabled=false; }
+    }
+    raf1=requestAnimationFrame(frame);
+  }
+  play1.addEventListener('click',playSeries);
+  reset1.addEventListener('click',resetSeries);
+  if(reduce){ showAll(); play1.disabled=true; play1.textContent='recording complete'; }
+
+  // ---------- chart 2: change-magnitude bars ----------
+  var dv=document.getElementById('delta');
+  function nrm(a){var lo=Math.min.apply(null,a),hi=Math.max.apply(null,a);return a.map(function(v){return (v-lo)/(hi-lo||1);});}
+  var nb=nrm(bright), nt=nrm(texture), nw=nrm(width);
+  var delta=[0];
+  for(var i=1;i<N;i++){ delta.push(Math.abs(nb[i]-nb[i-1])+Math.abs(nt[i]-nt[i-1])+Math.abs(nw[i]-nw[i-1])); }
+  var dmax=Math.max.apply(null,delta);
+  var BL=40, BR=330, bTop=24, bBase=150, bspan=BR-BL;
+  var bw=bspan/N*0.56;
+  dv.appendChild(el('line',{x1:BL,y1:bBase,x2:BR,y2:bBase,class:'grid'}));
+  var bars=[];
+  for(var i=0;i<N;i++){
+    var cx=BL + (i+0.5)*(bspan/N);
+    var h=delta[i]/dmax*(bBase-bTop);
+    var rct=el('rect',{x:(cx-bw/2).toFixed(1),y:bBase,width:bw.toFixed(1),height:0,rx:2,class:'bar'+(i===fill?' isfill':'')});
+    rct.dataset.h=h.toFixed(1); rct.dataset.y=(bBase-h).toFixed(1);
+    dv.appendChild(rct); bars.push(rct);
+  }
+  [0,fill,N-1].forEach(function(i){
+    var cx=BL+(i+0.5)*(bspan/N);
+    var t=el('text',{x:cx,y:bBase+13,'text-anchor':'middle',class:'axis-lab'}); t.textContent=dates[i]; dv.appendChild(t);
+  });
+  var fcx=BL+(fill+0.5)*(bspan/N);
+  var ring2=el('circle',{cx:fcx,r:16,class:'ring2'}); dv.appendChild(ring2);
+  var flab=el('text',{x:fcx,y:bTop-6,'text-anchor':'middle',class:'flaglab'}); flab.textContent='nourishment'; dv.appendChild(flab);
+
+  var run2=document.getElementById('run2'), cap2=document.getElementById('cap2'), ran=false;
+  function growBars(){
+    bars.forEach(function(b,i){
+      setTimeout(function(){
+        b.style.transition='y .5s cubic-bezier(.3,0,.2,1), height .5s cubic-bezier(.3,0,.2,1)';
+        b.setAttribute('y',b.dataset.y); b.setAttribute('height',b.dataset.h);
+      }, reduce?0:i*45);
+    });
+  }
+  function flag(){
+    var fb=bars[fill];
+    fb.classList.add('flag');
+    ring2.setAttribute('cy', (parseFloat(fb.dataset.y)+16).toFixed(1));
+    ring2.classList.add('on'); flab.classList.add('on');
+    bars.forEach(function(b,i){ if(i!==fill) b.style.opacity=.4; });
+    cap2.textContent='one date breaks the pattern — that’s your fill'; cap2.classList.add('live');
+    run2.disabled=true; run2.textContent='flagged ✓';
+  }
+  run2.addEventListener('click',function(){
+    if(ran) return; ran=true;
+    growBars();
+    setTimeout(flag, reduce?0:(N*45+450));
+  });
+  if(reduce){ /* show static end state */ bars.forEach(function(b){b.setAttribute('y',b.dataset.y);b.setAttribute('height',b.dataset.h);}); }
+})();
+</script>
